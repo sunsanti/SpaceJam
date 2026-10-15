@@ -103,6 +103,8 @@ public static class GameBuilder
             hearts[i].raycastTarget = false;
         }
 
+        AddScoreText(hud.transform);
+
         // Pause menu (ESC)
         new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
         hud.AddComponent<GraphicRaycaster>();
@@ -133,6 +135,26 @@ public static class GameBuilder
             new EditorBuildSettingsScene("Assets/Scenes/MainMenu.unity", true),
             new EditorBuildSettingsScene("Assets/Scenes/Game.unity", true),
         };
+    }
+
+    // Score counter, top-right of the HUD, drawn under the pause overlay. Replaces an existing one.
+    internal static void AddScoreText(Transform hud)
+    {
+        var old = hud.Find("Score");
+        if (old) Object.DestroyImmediate(old.gameObject);
+
+        var t = MainMenuBuilder.MakeText("Score", hud, "SCORE  0", 48, 64);
+        Object.DestroyImmediate(t.GetComponent<LayoutElement>());
+        t.alignment = TMPro.TextAlignmentOptions.MidlineRight;
+        t.color = MainMenuBuilder.TitleColor;
+        t.fontStyle = TMPro.FontStyles.Bold;
+        t.raycastTarget = false;
+        var rt = t.rectTransform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = Vector2.one;
+        rt.anchoredPosition = new Vector2(-40, -40);
+        rt.sizeDelta = new Vector2(500, 64);
+        t.gameObject.AddComponent<ScoreHud>();
+        t.transform.SetSiblingIndex(hud.Find("Lives").GetSiblingIndex() + 1);
     }
 
     static GameObject MakeBulletPrefab(Material mat)

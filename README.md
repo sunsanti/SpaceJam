@@ -24,7 +24,7 @@ Game bắn thiên thạch 2D làm bằng Unity: lái tàu bay giữa bãi thiên
 ## Các màn hình
 
 ### Main Menu
-Menu chính có tàu bay ngang qua nền. Từ đây vào **Start Game**, **Instruction** hoặc **Settings**.
+Menu chính có tàu bay ngang qua nền. Từ đây vào **Start Game**, **Instruction**, **Scoreboard** hoặc **Settings**.
 
 | Hướng dẫn | Cài đặt |
 |---|---|
@@ -32,9 +32,18 @@ Menu chính có tàu bay ngang qua nền. Từ đây vào **Start Game**, **Inst
 
 **Settings** chỉnh bật/tắt và âm lượng của nhạc nền và hiệu ứng âm thanh, cùng chế độ toàn màn hình. Cài đặt được lưu lại (PlayerPrefs).
 
+### Scoreboard
+![Scoreboard](Docs/screenshots/07_scoreboard.png)
+
+- Mỗi lần game over, điểm được lưu vào máy (`PlayerPrefs`, key `Scoreboard`, dạng JSON).
+- Giữ tối đa **15 lượt** gần nhất. Lượt thứ 16 được thêm thì lượt cũ nhất bị xoá.
+- Lượt mới nhất hiện trên cùng; điểm cao nhất được tô vàng kèm chữ **BEST**.
+- Thoát giữa chừng bằng Pause → Main Menu thì không lưu.
+
 ### Màn chơi
 ![Gameplay](Docs/screenshots/04_gameplay.png)
 
+- Điểm hiện ở góc trên bên phải: phá thiên thạch nâu **+10**, thiên thạch xám **+30**.
 - 3 mạng (trái tim góc trên bên trái). Va vào thiên thạch thì mất 1 mạng và tàu nhấp nháy bất tử trong 2 giây. Hết mạng thì quay về menu.
 - **Thiên thạch nâu** vỡ sau 1 phát bắn.
 - **Thiên thạch xám** (đặc biệt) cần 3 phát và rơi ra 1–2 vật phẩm.
@@ -83,5 +92,6 @@ Muốn đổi âm thanh: thay file trong `Assets/Resources/Audio` và giữ nguy
 | `Scripts/Bullet.cs`, `Explosion.cs`, `Pickup.cs` | Đạn, hiệu ứng nổ, vật phẩm |
 | `Scripts/GameAudio.cs` | Nhạc nền theo scene và hiệu ứng âm thanh (tự khởi tạo, không cần gắn vào scene) |
 | `Scripts/MainMenu.cs`, `SettingsMenu.cs`, `PauseMenu.cs` | Menu chính, cài đặt, tạm dừng |
+| `Scripts/Scoreboard.cs`, `ScoreHud.cs`, `ScoreboardPanel.cs` | Lưu/đọc lịch sử 15 lượt, hiện điểm trên HUD, bảng Scoreboard |
 | `Scripts/CameraFollow.cs`, `Starfield.cs`, `ShipFlyBy.cs` | Camera bám tàu, nền sao parallax, tàu bay ngang ở menu |
-| `Editor/MainMenuBuilder.cs`, `GameBuilder.cs` | Tạo lại scene: **Tools → Build Main Menu / Build Game Scene** |
+| `Editor/MainMenuBuilder.cs`, `GameBuilder.cs` | Tạo lại scene: **Tools → Build Main Menu / Build Game Scene**; **Tools → Add Scoreboard** chỉ thêm phần scoreboard vào scene có sẵn |

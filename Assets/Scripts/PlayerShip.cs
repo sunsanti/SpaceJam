@@ -167,6 +167,7 @@ public class PlayerShip : MonoBehaviour
         if (lives >= 0 && lives < hearts.Length) hearts[lives].sprite = emptyHeart;
         if (lives <= 0)
         {
+            Scoreboard.Record(Scoreboard.Current);
             SceneManager.LoadScene("MainMenu"); // temporary game over
             return;
         }

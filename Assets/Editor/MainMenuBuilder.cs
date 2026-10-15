@@ -151,6 +151,7 @@ public static class MainMenuBuilder
         UnityEventTools.AddPersistentListener(instrBack.onClick, menu.Back);
         UnityEventTools.AddPersistentListener(settBack.onClick, menu.Back);
 
+        AddScoreboard(menu);
         AddBackground();
 
         const string path = "Assets/Scenes/MainMenu.unity";
@@ -160,6 +161,59 @@ public static class MainMenuBuilder
             new EditorBuildSettingsScene(path, true),
             new EditorBuildSettingsScene("Assets/Scenes/Game.unity", true),
         };
+    }
+
+    // Adds the Scoreboard button/popup to MainMenu.unity and the score counter to Game.unity.
+    // Safe to re-run: replaces only the objects it created.
+    [MenuItem("Tools/Add Scoreboard")]
+    public static void BuildScoreboard()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        InitResources();
+
+        var scene = EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
+        AddScoreboard(Object.FindAnyObjectByType<MainMenu>());
+        EditorSceneManager.SaveScene(scene);
+
+        scene = EditorSceneManager.OpenScene("Assets/Scenes/Game.unity");
+        GameBuilder.AddScoreText(GameObject.Find("HUD").transform);
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    static void AddScoreboard(MainMenu menu)
+    {
+        var canvas = menu.transform;
+        var mainPanel = canvas.Find("MainMenuPanel");
+        foreach (var old in new[] { mainPanel.Find("ScoreboardButton"), canvas.Find("ScoreboardPanel") })
+            if (old) Object.DestroyImmediate(old.gameObject);
+
+        // Button goes between Instruction and Settings.
+        var button = MakeButton("ScoreboardButton", mainPanel, "Scoreboard");
+        button.transform.SetSiblingIndex(mainPanel.Find("SettingsButton").GetSiblingIndex());
+
+        var panel = Panel("ScoreboardPanel", canvas, OverlayColor);
+        var card = Card(panel, 1000, 960);
+        MakeText("Title", card, "SCOREBOARD", 72, 100).color = TitleColor;
+        var hint = MakeText("Hint", card, $"Last {Scoreboard.MaxEntries} games, newest first", 28, 40);
+        hint.color = new Color(1, 1, 1, 0.6f);
+        hint.GetComponent<LayoutElement>().preferredWidth = 880;
+        var list = MakeText("List", card, "", 32, 600);
+        list.alignment = TextAlignmentOptions.TopLeft;
+        list.lineSpacing = 2;
+        list.GetComponent<LayoutElement>().preferredWidth = 700;
+        var back = MakeButton("BackButton", card, "Back");
+
+        var sp = panel.gameObject.AddComponent<ScoreboardPanel>();
+        var so = new SerializedObject(sp);
+        so.FindProperty("list").objectReferenceValue = list;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        so = new SerializedObject(menu);
+        so.FindProperty("scoreboardPanel").objectReferenceValue = panel.gameObject;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        UnityEventTools.AddPersistentListener(button.onClick, menu.OpenScoreboard);
+        UnityEventTools.AddPersistentListener(back.onClick, menu.Back);
+        panel.gameObject.SetActive(false);
     }
 
     // Adds the animated space background to MainMenu.unity without touching the UI.

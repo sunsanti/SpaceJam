@@ -33,6 +33,7 @@ public class Asteroid : MonoBehaviour
         }
 
         GameAudio.Play("Explosion", 0.7f);
+        Scoreboard.Current += maxHealth * 10; // normal rock 10, special (3 HP) 30
         if (explosionPrefab)
         {
             var boom = Instantiate(explosionPrefab, transform.position, Quaternion.identity);
