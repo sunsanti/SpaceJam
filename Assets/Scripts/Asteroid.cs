@@ -27,10 +27,12 @@ public class Asteroid : MonoBehaviour
         health -= damage;
         if (health > 0)
         {
+            GameAudio.Play("Hit", 0.5f);
             StartCoroutine(Flash());
             return;
         }
 
+        GameAudio.Play("Explosion", 0.7f);
         if (explosionPrefab)
         {
             var boom = Instantiate(explosionPrefab, transform.position, Quaternion.identity);

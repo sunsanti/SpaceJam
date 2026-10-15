@@ -22,6 +22,7 @@ public class PauseMenu : MonoBehaviour
     {
         paused = true;
         Time.timeScale = 0;
+        AudioListener.pause = true; // silences SFX/engine; music has ignoreListenerPause
         pausePanel.SetActive(true);
     }
 
@@ -29,12 +30,14 @@ public class PauseMenu : MonoBehaviour
     {
         paused = false;
         Time.timeScale = 1;
+        AudioListener.pause = false;
         pausePanel.SetActive(false);
     }
 
     public void QuitToMenu()
     {
         Time.timeScale = 1;
+        AudioListener.pause = false;
         SceneManager.LoadScene("MainMenu");
     }
 }

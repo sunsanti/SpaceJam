@@ -110,9 +110,6 @@ public static class MainMenuBuilder
         var settCard = Card(settPanel, 1100, 600);
         MakeText("Title", settCard, "SETTINGS", 72, 100).color = TitleColor;
         var settings = canvasGo.AddComponent<SettingsMenu>();
-        var musicSource = new GameObject("Music").AddComponent<AudioSource>();
-        musicSource.loop = true;
-        musicSource.playOnAwake = true;
 
         var musicRow = Row(settCard, 40);
         Label(musicRow, "Music", 36, 320, 70);
@@ -132,7 +129,6 @@ public static class MainMenuBuilder
         var settBack = MakeButton("BackButton", settCard, "Back");
 
         var sso = new SerializedObject(settings);
-        sso.FindProperty("music").objectReferenceValue = musicSource;
         sso.FindProperty("musicToggle").objectReferenceValue = musicToggle;
         sso.FindProperty("musicSlider").objectReferenceValue = musicSlider;
         sso.FindProperty("sfxToggle").objectReferenceValue = sfxToggle;

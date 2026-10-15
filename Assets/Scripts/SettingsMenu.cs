@@ -5,7 +5,6 @@ using UnityEngine.UI;
 // so saved music settings apply on boot, even before the Settings panel is opened.
 public class SettingsMenu : MonoBehaviour
 {
-    [SerializeField] AudioSource music;
     [SerializeField] Toggle musicToggle;
     [SerializeField] Slider musicSlider;
     [SerializeField] Toggle sfxToggle;
@@ -38,8 +37,6 @@ public class SettingsMenu : MonoBehaviour
     void ApplyMusic()
     {
         musicSlider.interactable = musicToggle.isOn;
-        if (!music) return;
-        music.mute = !musicToggle.isOn;
-        music.volume = musicSlider.value;
+        GameAudio.ApplyMusicSettings();
     }
 }

@@ -1,0 +1,8 @@
+All audio here is CC0 (public domain) - free for any use, credit optional.
+
+MenuMusic.ogg  - "Another space background track" by yd
+                 https://opengameart.org/content/another-space-background-track
+GameMusic.ogg  - "Fast Fight / Battle Music (looped)" by Ville Nousiainen (uploaded by XCVG)
+                 https://opengameart.org/content/fast-fight-battle-music-looped
+Shoot, Explosion, Engine, Hit, ShieldBreak, PlayerHurt - Kenney "Sci-Fi Sounds"  https://kenney.nl/assets/sci-fi-sounds
+Pickup         - Kenney "Digital Audio"  https://kenney.nl/assets/digital-audio

@@ -43,6 +43,7 @@ public class PlayerShip : MonoBehaviour
     Vector2 dashVelocity;
     bool invulnerable;
     Sprite fullHeart;
+    AudioSource engine;
 
     void Awake()
     {
@@ -50,6 +51,12 @@ public class PlayerShip : MonoBehaviour
         sprite = GetComponent<SpriteRenderer>();
         fullHeart = hearts.Length > 0 ? hearts[0].sprite : null;
         shield.SetActive(false);
+
+        engine = gameObject.AddComponent<AudioSource>();
+        engine.clip = Resources.Load<AudioClip>("Audio/Engine");
+        engine.loop = true;
+        engine.volume = 0f;
+        engine.Play();
     }
 
     void Update()
@@ -59,6 +66,9 @@ public class PlayerShip : MonoBehaviour
 
         move = (kb.wKey.isPressed ? 1 : 0) - (kb.sKey.isPressed ? 1 : 0);
         turn = (kb.aKey.isPressed ? 1 : 0) - (kb.dKey.isPressed ? 1 : 0);
+        // Engine hum: quiet idle, louder and higher-pitched while thrusting.
+        engine.volume = Mathf.MoveTowards(engine.volume, (move != 0 ? 0.6f : 0.15f) * GameAudio.SfxScale, 2f * Time.deltaTime);
+        engine.pitch = Mathf.MoveTowards(engine.pitch, move != 0 ? 1.3f : 1f, 2f * Time.deltaTime);
 
         if (kb.shiftKey.wasPressedThisFrame && Time.time >= nextDashTime)
         {
@@ -78,6 +88,7 @@ public class PlayerShip : MonoBehaviour
 
     void Fire()
     {
+        GameAudio.Play("Shoot", 0.4f);
         switch (weaponLevel)
         {
             case 1: Shoot(0f, 0f); break;
@@ -105,6 +116,7 @@ public class PlayerShip : MonoBehaviour
 
     public void ApplyPickup(PickupType type)
     {
+        GameAudio.Play("Pickup");
         switch (type)
         {
             case PickupType.ExtraShot:
@@ -145,11 +157,13 @@ public class PlayerShip : MonoBehaviour
         if (shield.activeSelf)
         {
             shield.SetActive(false);
+            GameAudio.Play("ShieldBreak");
             StartCoroutine(Blink());
             return;
         }
 
         lives--;
+        GameAudio.Play("PlayerHurt");
         if (lives >= 0 && lives < hearts.Length) hearts[lives].sprite = emptyHeart;
         if (lives <= 0)
         {
