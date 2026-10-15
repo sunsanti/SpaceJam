@@ -52,29 +52,28 @@ public static class GameBuilder
         ship.transform.rotation = Quaternion.Euler(0, 0, 90); // start nose-up, so W flies up the screen
         var player = ship.AddComponent<PlayerShip>();
         MainMenuBuilder.AddEngineTrail(ship, mat);
+        var shield = MainMenuBuilder.MakeSprite("Shield", ship.transform,
+            MainMenuBuilder.LoadSprite("Assets/Sprites/Effects/Shield.png", 100), mat, 11);
 
         cam.gameObject.AddComponent<CameraFollow>();
         Assign(cam.GetComponent<CameraFollow>(), "target", ship.transform);
 
         // Asteroids: Drift wraps them around the camera view, so wherever the ship flies there are always rocks ahead.
-        var rockSprite = MainMenuBuilder.LoadSprite("Assets/Sprites/Asteroid1_Rock.png", 100);
-        var field = new GameObject("Asteroids");
-        for (int i = 0; i < 14; i++)
+        // Normal rocks break in one hit; special (grey) rocks take 3 hits and drop item bubbles.
+        var explosion = MakeExplosionPrefab(mat);
+        var drops = new[]
         {
-            Vector2 pos;
-            do pos = new Vector2(Random.Range(-w, w), Random.Range(-h, h));
-            while (pos.magnitude < 4f); // don't start on top of the player
-
-            float scale = Random.Range(0.6f, 1.6f);
-            var rock = MainMenuBuilder.MakeSprite($"Asteroid{i + 1}", field.transform, rockSprite, mat, 0);
-            rock.transform.SetPositionAndRotation(pos, Quaternion.Euler(0, 0, Random.Range(0f, 360f)));
-            rock.transform.localScale = Vector3.one * scale;
-            rock.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
-            var col = rock.AddComponent<CircleCollider2D>();
-            col.isTrigger = true;
-            col.radius = 0.45f;
-            rock.AddComponent<Drift>();
-        }
+            MakePickupPrefab(mat, PickupType.ExtraShot, "Item_ExtraShot"),
+            MakePickupPrefab(mat, PickupType.Shield, "Item_Shield"),
+            MakePickupPrefab(mat, PickupType.Heal, "Item_Heal"),
+        };
+        var field = new GameObject("Asteroids");
+        var rockSprite = MainMenuBuilder.LoadSprite("Assets/Sprites/Asteroid1_Rock.png", 100);
+        var specialSprite = MainMenuBuilder.LoadSprite("Assets/Sprites/Asteroid2_Grey.png", 100);
+        for (int i = 0; i < 12; i++)
+            MakeAsteroid($"Asteroid{i + 1}", field.transform, rockSprite, mat, Random.Range(1f, 2.2f), 1, explosion, new Pickup[0], w, h);
+        for (int i = 0; i < 3; i++)
+            MakeAsteroid($"SpecialAsteroid{i + 1}", field.transform, specialSprite, mat, Random.Range(1.6f, 2.4f), 3, explosion, drops, w, h);
 
         // HUD: 3 hearts (health), top-left
         var hud = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler));
@@ -119,7 +118,8 @@ public static class GameBuilder
         pausePanel.gameObject.SetActive(false);
 
         var so = new SerializedObject(player);
-        so.FindProperty("bulletPrefab").objectReferenceValue = MakeBulletPrefab(mat);
+        so.FindProperty("bulletPrefab").objectReferenceValue = MakeBulletPrefab(mat).GetComponent<Bullet>();
+        so.FindProperty("shield").objectReferenceValue = shield;
         so.FindProperty("emptyHeart").objectReferenceValue =
             MainMenuBuilder.LoadSprite("Assets/Sprites/Health/Heart_Empty.png", 100);
         var arr = so.FindProperty("hearts");
@@ -144,8 +144,60 @@ public static class GameBuilder
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         go.AddComponent<BoxCollider2D>().isTrigger = true;
         go.AddComponent<Bullet>();
+        return SavePrefab(go);
+    }
+
+    static GameObject MakeExplosionPrefab(Material mat)
+    {
+        var go = MainMenuBuilder.MakeSprite("Explosion", null,
+            MainMenuBuilder.LoadSprite("Assets/Sprites/Effects/Explosion.png", 100), mat, 12);
+        go.AddComponent<Explosion>();
+        return SavePrefab(go);
+    }
+
+    static Pickup MakePickupPrefab(Material mat, PickupType type, string spriteName)
+    {
+        var go = MainMenuBuilder.MakeSprite(spriteName, null,
+            MainMenuBuilder.LoadSprite($"Assets/Sprites/Items/{spriteName}.png", 128), mat, 8);
+        go.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+        go.AddComponent<CircleCollider2D>().isTrigger = true;
+        var pickup = go.AddComponent<Pickup>();
+        var so = new SerializedObject(pickup);
+        so.FindProperty("type").enumValueIndex = (int)type;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return SavePrefab(go).GetComponent<Pickup>();
+    }
+
+    static void MakeAsteroid(string name, Transform parent, Sprite sprite, Material mat, float scale, int health,
+        GameObject explosion, Pickup[] drops, float w, float h)
+    {
+        Vector2 pos;
+        do pos = new Vector2(Random.Range(-w, w), Random.Range(-h, h));
+        while (pos.magnitude < 4f); // don't start on top of the player
+
+        var rock = MainMenuBuilder.MakeSprite(name, parent, sprite, mat, 0);
+        rock.transform.SetPositionAndRotation(pos, Quaternion.Euler(0, 0, Random.Range(0f, 360f)));
+        rock.transform.localScale = Vector3.one * scale;
+        rock.AddComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+        var col = rock.AddComponent<CircleCollider2D>();
+        col.isTrigger = true;
+        col.radius = 0.45f;
+        rock.AddComponent<Drift>();
+        var asteroid = rock.AddComponent<Asteroid>();
+        var so = new SerializedObject(asteroid);
+        so.FindProperty("maxHealth").intValue = health;
+        so.FindProperty("explosionPrefab").objectReferenceValue = explosion;
+        var table = so.FindProperty("dropTable");
+        table.arraySize = drops.Length;
+        for (int i = 0; i < drops.Length; i++) table.GetArrayElementAtIndex(i).objectReferenceValue = drops[i];
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // Saves a temporary scene object as Assets/Prefabs/<name>.prefab and removes it from the scene.
+    static GameObject SavePrefab(GameObject go)
+    {
         if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
-        var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/Prefabs/Bullet.prefab");
+        var prefab = PrefabUtility.SaveAsPrefabAsset(go, $"Assets/Prefabs/{go.name}.prefab");
         Object.DestroyImmediate(go);
         return prefab;
     }
